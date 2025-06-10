@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def register():
-    print("TOKEN:", os.getenv("WAZZUP_TOKEN"))  # <-- Вставили сюда
+    print("TOKEN:", os.getenv("WAZZUP_TOKEN"))
 
     url = "https://api.wazzup24.com/v3/webhooks"
     headers = {
@@ -19,7 +19,7 @@ def register():
             "messagesAndStatuses": True,
             "contactsAndDealsCreation": True,
             "channelsUpdates": True,
-            "templateStatuses": True
+            "templateStatus": True   # <-- тут исправлено
         }
     }
 
@@ -29,4 +29,3 @@ def register():
         print("Response text:", response.text)
     except Exception as e:
         print("Exception during webhook registration:", str(e))
-
