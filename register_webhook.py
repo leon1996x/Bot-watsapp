@@ -17,7 +17,7 @@ def register():
             "messagesAndStatuses": True,
             "contactsAndDealsCreation": True,
             "channelsUpdates": True,
-            "templateStatus": True
+            "templateStatuses": True  # <-- исправлено
         }
     }
 
@@ -27,4 +27,3 @@ def register():
         print("Response text:", response.text)
     except Exception as e:
         print("Exception during webhook registration:", str(e))
-
