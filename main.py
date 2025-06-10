@@ -29,6 +29,9 @@ async def wazzup_webhook(request: Request):
         await process_message(phone, text)
     return {"status": "ok"}
 
+@app.get("/routes")
+async def get_routes():
+    return [route.path for route in app.routes]
 @app.get("/register")
 async def trigger_register():
     print("🔁 Регистрируем вебхук...")
