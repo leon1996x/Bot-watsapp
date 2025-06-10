@@ -11,6 +11,10 @@ async def startup_event():
     from register_webhook import register
     register()
 
+@app.get("/")  # <--- добавь этот маршрут
+async def root():
+    return {"status": "ok"}
+
 @app.post("/webhook/wazzup")
 async def wazzup_webhook(request: Request):
     data = await request.json()
