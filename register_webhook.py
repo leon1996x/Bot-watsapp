@@ -12,7 +12,7 @@ def register():
     }
 
     payload = {
-        "webhooksUri": "https://bot-watsapp-bmen.onrender.com/webhook/wazzup",
+        "webhooksUri": "https://bot-watsapp-bmen.onrender.com/webhook/wazzup",  # <-- поле webhooksUri
         "subscriptions": {
             "messagesAndStatuses": True,
             "contactsAndDealsCreation": True,
