@@ -28,4 +28,8 @@ async def wazzup_webhook(request: Request):
         text = msg.get("text", "")
         await process_message(phone, text)
     return {"status": "ok"}
-
+@app.get("/register")
+async def trigger_register():
+    from register_webhook import register
+    register()
+    return {"status": "Webhook registration triggered"}
