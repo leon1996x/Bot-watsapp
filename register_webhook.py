@@ -11,8 +11,14 @@ def register():
         "Content-Type": "application/json"
     }
     payload = {
-        "url": "https://bot-watsapp-bmen.onrender.com/webhook/wazzup",
-        "events": ["messages"]
+        "webhooksUri": "https://bot-watsapp-bmen.onrender.com/webhook/wazzup",
+        "subscriptions": {
+            "messagesAndStatuses": True,
+            "contactsAndDealsCreation": True,
+            "channelsUpdates": False,
+            "templateStatus": False
+        }
     }
-    response = requests.post(url, json=payload, headers=headers)
+    response = requests.patch(url, json=payload, headers=headers)
     print("Webhook registration response:", response.status_code, response.text)
+
