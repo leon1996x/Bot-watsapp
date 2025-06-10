@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from dialog_state import process_message
 import os
 from dotenv import load_dotenv
@@ -10,6 +10,14 @@ app = FastAPI()
 async def startup_event():
     from register_webhook import register
     register()
+
+@app.head("/webhook/wazzup")
+async def wazzup_webhook_head():
+    return Response(status_code=200)
+
+@app.options("/webhook/wazzup")
+async def wazzup_webhook_options():
+    return Response(status_code=200)
 
 @app.post("/webhook/wazzup")
 async def wazzup_webhook(request: Request):
