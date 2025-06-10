@@ -12,14 +12,19 @@ def register():
     }
 
     payload = {
-        "webhooksUri": "https://bot-watsapp-bmen.onrender.com/webhook/wazzup",  # <-- поле webhooksUri
+        "webhooksUri": "https://bot-watsapp-bmen.onrender.com/webhook/wazzup",
         "subscriptions": {
             "messagesAndStatuses": True,
             "contactsAndDealsCreation": True,
-            "channelsUpdates": False,
-            "templateStatus": False
+            "channelsUpdates": True,
+            "templateStatus": True
         }
     }
 
-    response = requests.patch(url, json=payload, headers=headers)
-    print("Webhook registration response:", response.status_code, response.text)
+    try:
+        response = requests.patch(url, json=payload, headers=headers)
+        print("Webhook registration response:", response.status_code)
+        print("Response text:", response.text)
+    except Exception as e:
+        print("Exception during webhook registration:", str(e))
+
