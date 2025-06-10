@@ -34,4 +34,3 @@ async def trigger_register():
     print("🔁 Регистрируем вебхук...")
     result = register()
     return result
-
