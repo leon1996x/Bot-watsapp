@@ -1,55 +1,57 @@
-from fastapi import FastAPI, Request, Response
-from dialog_state import process_message
-import os
-from dotenv import load_dotenv
+from fastapi import FastAPI, Request
 import httpx
-
-load_dotenv()
-
-WAZZUP_API_TOKEN = os.getenv("WAZZUP_TOKEN")
+import os
 
 app = FastAPI()
 
+WAZZUP_TOKEN = "4e68fe2f438140b0ba531c114509b1e9"
+WEBHOOK_URL = "https://bot-watsapp-y7e8.onrender.com/webhook/wazzup"  # Обязательно совпадает с Render URL
 
 @app.on_event("startup")
 async def startup_event():
     print("🔥 THIS IS THE RIGHT MAIN.PY")
     print("🚀 Приложение запущено!")
 
-
 @app.get("/")
-@app.head("/")
 async def root():
-    return {"status": "ok"}
+    return {"message": "Приложение работает!"}
 
+# ✅ Для проверки доступности вебхука (Wazzup требует HEAD/GET)
+@app.get("/webhook/wazzup")
+@app.head("/webhook/wazzup")
+async def wazzup_webhook_check():
+    return {"status": "ok"}
 
 @app.post("/webhook/wazzup")
-@app.head("/webhook/wazzup")
-async def wazzup_webhook(request: Request):
-    if request.method == "HEAD":
-        return Response(status_code=200)
+async def handle_webhook(request: Request):
+    body = await request.json()
+    print("📩 Webhook получен:", body)
+
     try:
-        data = await request.json()
-        print("📩 Webhook получен:", data)
-        messages = data.get("messages", [])
-        for msg in messages:
-            phone = msg["author"].replace("whatsapp:", "")
-            text = msg.get("text", "")
-            await process_message(phone, text)
+        # Обработка входящих сообщений
+        for msg in body.get("messages", []):
+            chat_id = msg.get("chatId")
+            text = msg.get("text")
+            print(f"👤 chatId: {chat_id}, 💬 сообщение: {text}")
+            # Здесь можно добавить автоответ или отправку в Bitrix24
+
     except Exception as e:
         print("❌ Ошибка обработки webhook:", str(e))
-    return {"status": "ok"}
 
+    return {"message": "Получено"}
 
 @app.get("/register")
 async def register_webhook():
     print("Регистрируем вебхук...")
+    print("🔑 TOKEN:", WAZZUP_TOKEN)
+
+    url = "https://api.wazzup24.com/v3/webhooks"
     headers = {
-        "Authorization": f"Bearer {WAZZUP_API_TOKEN}",
+        "Authorization": f"Bearer {WAZZUP_TOKEN}",
         "Content-Type": "application/json"
     }
     data = {
-        "webhooksUri": "https://bot-watsapp-y7e8.onrender.com/webhook/wazzup",
+        "webhooksUri": WEBHOOK_URL,
         "subscriptions": {
             "messagesAndStatuses": True,
             "contactsAndDealsCreation": True
@@ -57,18 +59,24 @@ async def register_webhook():
     }
 
     async with httpx.AsyncClient() as client:
-        response = await client.patch("https://api.wazzup24.com/v3/webhooks", headers=headers, json=data)
+        response = await client.patch(url, json=data, headers=headers)
 
-    print(f"📡 Webhook registration response: {response.status_code}")
-    print(f"📬 Response text: {response.text}")
+    print("📡 Webhook registration response:", response.status_code)
+    print("📬 Response text:", response.text)
 
+    # ⚠️ Безопасная попытка распарсить JSON-ответ
     try:
-        json_data = response.json() if response.content else {"message": "Empty response"}
+        json_response = response.json()
     except Exception as e:
-        json_data = {"error": "Failed to parse JSON", "details": str(e)}
+        return {
+            "status_code": response.status_code,
+            "response": {
+                "error": "Failed to parse JSON",
+                "details": str(e)
+            }
+        }
 
     return {
         "status_code": response.status_code,
-        "response": json_data
+        "response": json_response
     }
-
