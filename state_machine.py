@@ -1,7 +1,6 @@
-
 from enum import Enum
 
-class State(Enum):
+class State(str, Enum):
     START = "start"
     CLIENT_TYPE = "client_type"
     INN = "inn"
@@ -19,3 +18,9 @@ class State(Enum):
 # Временное хранилище
 user_states = {}       # chat_id -> State
 user_data = {}         # chat_id -> dict
+
+def get_state(chat_id: str) -> State:
+    return user_states.get(chat_id, State.START)
+
+def set_state(chat_id: str, state: State):
+    user_states[chat_id] = state
