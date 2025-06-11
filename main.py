@@ -1,12 +1,12 @@
 
-from fastapi import FastAPI, Request, Response
-from dialog_state import process_message
+from fastapi import FastAPI, Request
+import httpx
 import os
-from dotenv import load_dotenv
-from register_webhook import register
 
-load_dotenv()
 app = FastAPI()
+
+WAZZUP_TOKEN = "4e68fe2f438140b0ba531c114509b1e9"
+WEBHOOK_URL = "https://bot-watsapp-y7e8.onrender.com/webhook/wazzup"  # Убедись, что этот адрес совпадает с Render URL
 
 @app.on_event("startup")
 async def startup_event():
@@ -14,25 +14,46 @@ async def startup_event():
     print("🚀 Приложение запущено!")
 
 @app.get("/")
-@app.head("/")
 async def root():
+    return {"message": "Приложение работает!"}
+
+# ✅ Новый обработчик: GET и HEAD на /webhook/wazzup
+@app.get("/webhook/wazzup")
+@app.head("/webhook/wazzup")
+async def wazzup_webhook_check():
     return {"status": "ok"}
 
-@app.api_route("/webhook/wazzup", methods=["POST", "HEAD"])
-async def wazzup_webhook(request: Request):
-    if request.method == "HEAD":
-        print("✅ HEAD-запрос от Wazzup получен")
-        return Response(status_code=200)
-    data = await request.json()
-    messages = data.get("messages", [])
-    for msg in messages:
-        phone = msg["author"].replace("whatsapp:", "")
-        text = msg.get("text", "")
-        await process_message(phone, text)
-    return {"status": "ok"}
+@app.post("/webhook/wazzup")
+async def handle_webhook(request: Request):
+    body = await request.json()
+    print("📩 Webhook получен:", body)
+    return {"message": "Получено"}
 
 @app.get("/register")
-async def trigger_register():
-    print("🔁 Регистрируем вебхук...")
-    result = register()
-    return result
+async def register_webhook():
+    print("Регистрируем вебхук...")
+    print("🔑 TOKEN:", WAZZUP_TOKEN)
+
+    url = "https://api.wazzup24.com/v3/webhooks"
+    headers = {
+        "Authorization": f"Bearer {WAZZUP_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "webhooksUri": WEBHOOK_URL,
+        "subscriptions": {
+            "messagesAndStatuses": True,
+            "contactsAndDealsCreation": True
+        }
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.patch(url, json=data, headers=headers)
+
+    print("📡 Webhook registration response:", response.status_code)
+    print("📬 Response text:", response.text)
+
+    return {
+        "status_code": response.status_code,
+        "response": response.json()
+    }
