@@ -1,21 +1,13 @@
 from fastapi import FastAPI, Request
 import httpx
-import os
 
-from state_machine import State, user_states, user_data
+from state_machine import get_state, set_state, State
 
 app = FastAPI()
 
 WAZZUP_TOKEN = "4e68fe2f438140b0ba531c114509b1e9"
 WEBHOOK_URL = "https://bot-watsapp-y7e8.onrender.com/webhook/wazzup"
-CHANNEL_ID = "fe817b21-47a7-424e-a021-9b5200c4cf29"  # <-- добавлен ID канала
-
-# FSM функции
-def get_state(chat_id):
-    return user_states.get(chat_id, State.START)
-
-def set_state(chat_id, state):
-    user_states[chat_id] = state
+CHANNEL_ID = "fe817b21-47a7-424e-a021-9b5200c4cf29"
 
 @app.on_event("startup")
 async def startup_event():
@@ -60,29 +52,36 @@ async def handle_webhook(request: Request):
                     set_state(chat_id, State.INN)
                 elif text in ["2", "2️⃣", "гос", "госучреждение"]:
                     await send_message(chat_id, "Отлично, укажите, пожалуйста, ИНН учреждения.")
-                    set_state(chat_id, State.INN)
+                    set_state(chat_id, State.GOV_INN)
                 elif text in ["3", "3️⃣", "физ", "физлицо"]:
-                    await send_message(chat_id, 
+                    await send_message(chat_id,
                         "Извините, мы работаем только с юрлицами и госучреждениями.")
                     set_state(chat_id, State.START)
                 else:
                     await send_message(chat_id, "Пожалуйста, выберите 1️⃣, 2️⃣ или 3️⃣.")
+
     except Exception as e:
         print("❌ Ошибка обработки webhook:", str(e))
 
     return {"message": "Получено"}
 
-# ✅ Функция отправки сообщений — с channelId и chatType
+# Отправка сообщений через Wazzup
 async def send_message(chat_id: str, text: str):
     url = "https://api.wazzup24.com/v3/message"
     headers = {
         "Authorization": f"Bearer {WAZZUP_TOKEN}",
         "Content-Type": "application/json"
     }
+
+    # Убедимся, что номер в формате +7...
+    phone = chat_id
+    if not phone.startswith("+"):
+        phone = "+7" + phone[-10:]
+
     data = {
         "channelId": CHANNEL_ID,
         "chatType": "whatsapp",
-        "phone": chat_id,
+        "phone": phone,
         "text": text
     }
 
@@ -125,6 +124,7 @@ async def register_webhook():
                 "details": str(e)
             }
         }
+
     return {
         "status_code": response.status_code,
         "response": json_response
