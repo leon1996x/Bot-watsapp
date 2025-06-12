@@ -5,7 +5,7 @@ from state_machine import get_state, set_state, State
 
 app = FastAPI()
 
-WAZZUP_TOKEN = "4e68fe2f438140b0ba531c114509b1e9"
+WAZZUP_TOKEN = ""
 WEBHOOK_URL = "https://bot-watsapp-y7e8.onrender.com/webhook/wazzup"
 CHANNEL_ID = "fe817b21-47a7-424e-a021-9b5200c4cf29"
 
