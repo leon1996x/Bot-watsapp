@@ -23,4 +23,5 @@ def get_state(chat_id: str) -> State:
     return user_states.get(chat_id, State.START)
 
 def set_state(chat_id: str, state: State):
+    print(f"✅ Устанавливаем состояние: {chat_id} → {state}")
     user_states[chat_id] = state
