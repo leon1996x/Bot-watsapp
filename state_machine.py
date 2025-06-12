@@ -1,33 +1,31 @@
 from enum import Enum
 
+# FSM состояния
 class State(str, Enum):
     START = "start"
     CLIENT_TYPE = "client_type"
     INN = "inn"
-    PURCHASE_GOAL = "purchase_goal"
-    GOV_INN = "gov_inn"
-    PURCHASE_METHOD = "purchase_method"
-    NEED_TZ = "need_tz"
-    NEED_INSTALL = "need_install"
-    NEED_TRAINING = "need_training"
+    PURPOSE = "purpose"
+    GOV_PURCHASE_METHOD = "gov_purchase_method"
+    GOV_PARTNER_INN = "gov_partner_inn"
+    EXTRA_SERVICES = "extra_services"
     DEADLINE = "deadline"
     CONTACTS = "contacts"
-    END = "end"
-    BLOCKED = "blocked"
 
-# Память бота
-user_states = {}         # chat_id -> State
-user_data = {}           # chat_id -> dict
-last_messages = {}       # chat_id -> str
+# Хранилища состояний и контекста
+_states = {}
+_contexts = {}
 
-def get_state(chat_id: str) -> State:
-    return user_states.get(chat_id, State.START)
+def get_state(user_id):
+    return _states.get(user_id, State.START)
 
-def set_state(chat_id: str, state: State):
-    user_states[chat_id] = state
+def set_state(user_id, state):
+    _states[user_id] = state
 
-def get_last_message(chat_id: str) -> str:
-    return last_messages.get(chat_id, "")
+def get_context(user_id):
+    return _contexts.get(user_id, {})
 
-def set_last_message(chat_id: str, text: str):
-    last_messages[chat_id] = text
+def update_context(user_id, data):
+    if user_id not in _contexts:
+        _contexts[user_id] = {}
+    _contexts[user_id].update(data)  # добавляем или обновляем значения
