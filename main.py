@@ -5,7 +5,7 @@ from state_machine import get_state, set_state, State
 
 app = FastAPI()
 
-WAZZUP_TOKEN = ""
+WAZZUP_TOKEN = "4e68fe2f438140b0ba531c114509b1e9"
 WEBHOOK_URL = "https://bot-watsapp-y7e8.onrender.com/webhook/wazzup"
 CHANNEL_ID = "fe817b21-47a7-424e-a021-9b5200c4cf29"
 
@@ -34,6 +34,10 @@ async def handle_webhook(request: Request):
 
     try:
         for msg in body.get("messages", []):
+            # 👉 Фильтрация входящих сообщений от клиента
+            if msg.get("direction") != "in":
+                continue
+
             chat_id = msg.get("chatId", "").strip()
             text = msg.get("text", "").strip()
 
@@ -82,14 +86,13 @@ async def send_message(chat_id: str, text: str):
         "Content-Type": "application/json"
     }
 
-    # Приведение chat_id к формату chatId Wazzup (например: 79651234567@c.us)
+    # Приведение chat_id к формату Wazzup (например: 79651234567@c.us)
     if not chat_id.endswith("@c.us"):
         chat_id = chat_id.replace("+", "").replace("@c.us", "") + "@c.us"
 
     data = {
         "channelId": CHANNEL_ID,
         "chatId": chat_id,
-        "chatType": "whatsapp",
         "text": text
     }
 
