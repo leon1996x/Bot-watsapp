@@ -36,11 +36,11 @@ async def handle_webhook(request: Request):
         for msg in body.get("messages", []):
             text = msg.get("text", "").strip()
             phone = msg.get("contact", {}).get("phone")
+            chat_id = msg.get("chatId", "")
 
-            # если номера нет — пробуем из chatId
-            if not phone:
-                raw = msg.get("chatId", "")
-                phone = "+7" + raw[-10:] if raw and raw[-10:].isdigit() else None
+            # если номера нет — пробуем вытащить из chatId
+            if not phone and chat_id and chat_id[-10:].isdigit():
+                phone = "+7" + chat_id[-10:]
 
             if not phone:
                 print("❌ Не удалось определить номер телефона.")
@@ -51,27 +51,28 @@ async def handle_webhook(request: Request):
             state = get_state(phone)
 
             if state == State.START:
-                await send_message(phone,
+                await send_message(phone, 
                     "Здравствуйте! Мы поставляем оборудование для образовательных учреждений по всей России.\n"
                     "Вы представляете:\n"
                     "1️⃣ Юридическое лицо\n"
                     "2️⃣ Государственное учреждение\n"
-                    "3️⃣ Физическое лицо"
+                    "3️⃣ Физическое лицо", 
+                    chat_id
                 )
                 set_state(phone, State.CLIENT_TYPE)
 
             elif state == State.CLIENT_TYPE:
                 if text in ["1", "1️⃣", "юр", "юридическое лицо"]:
-                    await send_message(phone, "Хорошо, укажите, пожалуйста, ваш ИНН.")
+                    await send_message(phone, "Хорошо, укажите, пожалуйста, ваш ИНН.", chat_id)
                     set_state(phone, State.INN)
                 elif text in ["2", "2️⃣", "гос", "госучреждение"]:
-                    await send_message(phone, "Отлично, укажите, пожалуйста, ИНН учреждения.")
+                    await send_message(phone, "Отлично, укажите, пожалуйста, ИНН учреждения.", chat_id)
                     set_state(phone, State.GOV_INN)
                 elif text in ["3", "3️⃣", "физ", "физлицо"]:
-                    await send_message(phone, "Извините, мы работаем только с юрлицами и госучреждениями. Пожалуйста, выберите 1️⃣ или 2️⃣.")
-                    # оставляем состояние CLIENT_TYPE
+                    await send_message(phone, "Извините, мы работаем только с юрлицами и госучреждениями.", chat_id)
+                    set_state(phone, State.START)
                 else:
-                    await send_message(phone, "Пожалуйста, выберите 1️⃣, 2️⃣ или 3️⃣.")
+                    await send_message(phone, "Пожалуйста, выберите 1️⃣, 2️⃣ или 3️⃣.", chat_id)
 
     except Exception as e:
         print("❌ Ошибка обработки webhook:", str(e))
@@ -79,19 +80,24 @@ async def handle_webhook(request: Request):
     return {"message": "Получено"}
 
 
-# Отправка сообщений через Wazzup
-async def send_message(phone: str, text: str):
+# ✅ send_message с поддержкой chatId
+async def send_message(phone: str, text: str, chat_id: str = None):
     url = "https://api.wazzup24.com/v3/message"
     headers = {
         "Authorization": f"Bearer {WAZZUP_TOKEN}",
         "Content-Type": "application/json"
     }
+
     data = {
         "channelId": CHANNEL_ID,
-        "chatType": "whatsapp",
-        "phone": phone,
         "text": text
     }
+
+    if chat_id:
+        data["chatId"] = chat_id
+    else:
+        data["chatType"] = "whatsapp"
+        data["phone"] = phone
 
     async with httpx.AsyncClient() as client:
         response = await client.post(url, json=data, headers=headers)
